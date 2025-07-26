@@ -66,7 +66,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     time.sleep(random.uniform(0.7, 1.5))
     # Estimate uncertainty and reply
     try:
-        ue = estimate_uncertainty(model, ue_method, input_text=user_text)
+        ue = estimate_uncertainty(model, ue_method, input_text=user_text, max_new_tokens=1000)
         reply = (f"💬 *Question:* {ue.input_text}\n"
                  f"*Answer:* {ue.generation_text}\n"
                  f"*Uncertainty:* `{ue.uncertainty:.4f}`\n"
