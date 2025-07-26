@@ -1,13 +1,16 @@
+import asyncio
 import os
 import logging
 import random
 import time
+
+import lm_polygraph.estimators
 import requests
 from bs4 import BeautifulSoup
 from huggingface_scraper import get_top_models, get_fun_messages
 from transformers import AutoModelForCausalLM, AutoTokenizer, logging as hf_logging
 from lm_polygraph.utils.model import WhiteboxModel
-from lm_polygraph.estimators import MeanTokenEntropy
+from lm_polygraph.estimators import *
 from lm_polygraph.utils.manager import estimate_uncertainty
 from dotenv import load_dotenv
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
@@ -50,7 +53,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.edit_message_text(f"❌ This model seems unsupported: {e}")
             return
         context.user_data['model'] = WhiteboxModel(base, tok, model_path=model_name)
-        context.user_data['ue_method'] = MeanTokenEntropy()
+        context.user_data['ue_method'] = lm_polygraph.estimators.
         await query.edit_message_text(text=f"✅ Model set to: {model_name}\nNow send me a question.")
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -66,7 +69,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     time.sleep(random.uniform(0.7, 1.5))
     # Estimate uncertainty and reply
     try:
-        ue = estimate_uncertainty(model, ue_method, input_text=user_text, max_new_tokens=1000)
+        msg = await update.message.reply_text("⏳ Generating answer… 0%")
+        def progress_cb(done: int, total: int):
+            pct = int(done / total * 100)
+            # since progress_cb isn’t async, use `asyncio.create_task`
+            asyncio.create_task(
+                msg.edit_text(f"⏳ Generating answer… {pct}%")
+            )
+        ue = estimate_uncertainty(model, ue_method, input_text=user_text, max_new_tokens=256, progress_callback=progress_cb)
         reply = (f"💬 *Question:* {ue.input_text}\n"
                  f"*Answer:* {ue.generation_text}\n"
                  f"*Uncertainty:* `{ue.uncertainty:.4f}`\n"
