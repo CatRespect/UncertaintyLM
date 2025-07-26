@@ -53,7 +53,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.edit_message_text(f"❌ This model seems unsupported: {e}")
             return
         context.user_data['model'] = WhiteboxModel(base, tok, model_path=model_name)
-        context.user_data['ue_method'] = lm_polygraph.estimators.
+        context.user_data['ue_method'] = EigValLaplacian()
         await query.edit_message_text(text=f"✅ Model set to: {model_name}\nNow send me a question.")
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
