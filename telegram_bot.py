@@ -57,7 +57,7 @@ ESTIMATOR_METHODS = [
 ]
 
 # --- Progress ---
-def make_progress_callback(msg, loop, max_tokens=256, min_interval=0.5):
+def make_progress_callback(msg, loop, max_tokens=256, min_interval=0.6):
     last_time = 0
     last_shown = -1
 
@@ -134,17 +134,17 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     await update.message.reply_text(random.choice(get_fun_messages()))
-    msg = await update.message.reply_text(f"⏳ Generating… 0/{256} tokens")
+    msg = await update.message.reply_text(f"⏳ Generating… 0/{1024} tokens")
     loop = asyncio.get_running_loop()
 
-    patch_whitebox_model_with_progress(model, make_progress_callback(msg, loop, 256), 256)
+    patch_whitebox_model_with_progress(model, make_progress_callback(msg, loop, 1024), 1024)
 
     try:
         ue = await asyncio.to_thread(
             estimate_uncertainty,
             model, ue_method,
             input_text=user_text,
-            max_new_tokens=256
+            max_new_tokens=1024
         )
         await msg.edit_text("✅ Done!")
         reply = (f"💬 *Question:* {ue.input_text}\n"
